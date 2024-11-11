@@ -56,21 +56,18 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        Configuration config = new Configuration().addClass(User.class);
+        Configuration config = new Configuration().addAnnotatedClass(User.class);
         SessionFactory sessionFactory = config.buildSessionFactory();
-        Session session = sessionFactory.getCurrentSession();
-        try {
+        try (Session session = sessionFactory.getCurrentSession()) {
             session.beginTransaction();
             session.save(new User(name, lastName, age));
             session.getTransaction().commit();
-        } finally {
-            session.close();
         }
     }
 
     @Override
     public void removeUserById(long id) {
-        Configuration config = new Configuration().addClass(User.class);
+        Configuration config = new Configuration().addAnnotatedClass(User.class);
         SessionFactory sessionFactory = config.buildSessionFactory();
         try (Session session = sessionFactory.getCurrentSession()) {
             session.beginTransaction();
@@ -82,11 +79,11 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
-        Configuration config = new Configuration().addClass(User.class);
+        Configuration config = new Configuration().addAnnotatedClass(User.class);
         SessionFactory sessionFactory = config.buildSessionFactory();
         try (Session session = sessionFactory.getCurrentSession()) {
             session.beginTransaction();
-            session.createQuery("from User").list();
+            users = session.createQuery("from User").list();
             session.getTransaction().commit();
         }
         return users;
