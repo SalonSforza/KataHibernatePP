@@ -1,11 +1,8 @@
 package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
+import jm.task.core.jdbc.util.HibernateUtil;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
-
-import java.util.ArrayList;
 import java.util.List;
 
 public class UserDaoHibernateImpl implements UserDao {
@@ -45,9 +42,8 @@ public class UserDaoHibernateImpl implements UserDao {
     }
 
     private static void executeQueryViaHibernate(String sql) {
-        Configuration config = new Configuration();
-        SessionFactory sessionFactory = config.buildSessionFactory();
-        try (Session session = sessionFactory.getCurrentSession()) {
+
+        try (Session session = HibernateUtil.getSession()) {
             session.beginTransaction();
             session.createSQLQuery(sql).executeUpdate();
             session.getTransaction().commit();
@@ -56,9 +52,8 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        Configuration config = new Configuration().addAnnotatedClass(User.class);
-        SessionFactory sessionFactory = config.buildSessionFactory();
-        try (Session session = sessionFactory.getCurrentSession()) {
+
+        try (Session session = HibernateUtil.getSession()) {
             session.beginTransaction();
             session.save(new User(name, lastName, age));
             session.getTransaction().commit();
@@ -67,9 +62,8 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void removeUserById(long id) {
-        Configuration config = new Configuration().addAnnotatedClass(User.class);
-        SessionFactory sessionFactory = config.buildSessionFactory();
-        try (Session session = sessionFactory.getCurrentSession()) {
+
+        try (Session session = HibernateUtil.getSession()) {
             session.beginTransaction();
             session.remove(session.get(User.class, id));
             session.getTransaction().commit();
@@ -78,10 +72,9 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public List<User> getAllUsers() {
-        List<User> users = new ArrayList<>();
-        Configuration config = new Configuration().addAnnotatedClass(User.class);
-        SessionFactory sessionFactory = config.buildSessionFactory();
-        try (Session session = sessionFactory.getCurrentSession()) {
+        List<User> users;
+
+        try (Session session = HibernateUtil.getSession()) {
             session.beginTransaction();
             users = session.createQuery("from User").list();
             session.getTransaction().commit();

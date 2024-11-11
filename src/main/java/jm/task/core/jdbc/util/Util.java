@@ -9,6 +9,7 @@ public class Util {
     private static final String PASSWORD_KEY = "db.password";
     private static final String URL_KEY = "db.url";
 
+
     static {
         loadDriver();
     }
