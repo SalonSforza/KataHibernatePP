@@ -3,6 +3,7 @@ package jm.task.core.jdbc.dao;
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.HibernateUtil;
 import org.hibernate.Session;
+
 import java.util.List;
 
 public class UserDaoHibernateImpl implements UserDao {
@@ -42,11 +43,21 @@ public class UserDaoHibernateImpl implements UserDao {
     }
 
     private static void executeQueryViaHibernate(String sql) {
-
+        //Я не очень понял, зачем отлавливать тут исключение и делать rollback,
+        // ведь транзакция не должна состояться в случае исключения? Погуглил, поспрашивал chatGPT.
+        // Предлагают оформить так: (по тестам работает)
         try (Session session = HibernateUtil.getSession()) {
             session.beginTransaction();
-            session.createSQLQuery(sql).executeUpdate();
-            session.getTransaction().commit();
+            try {
+                session.createSQLQuery(sql).executeUpdate();
+                session.getTransaction().commit();
+            } catch (Exception e) {
+                if (session.getTransaction() != null) {
+                    session.getTransaction().rollback();
+                    e.printStackTrace();
+                }
+            }
+
         }
     }
 
@@ -54,30 +65,49 @@ public class UserDaoHibernateImpl implements UserDao {
     public void saveUser(String name, String lastName, byte age) {
 
         try (Session session = HibernateUtil.getSession()) {
-            session.beginTransaction();
-            session.save(new User(name, lastName, age));
-            session.getTransaction().commit();
+            try {
+                session.beginTransaction();
+                session.save(new User(name, lastName, age));
+                session.getTransaction().commit();
+            } catch (Exception e) {
+                if (session.getTransaction() != null) {
+                    session.getTransaction().rollback();
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
     @Override
     public void removeUserById(long id) {
-
         try (Session session = HibernateUtil.getSession()) {
-            session.beginTransaction();
-            session.remove(session.get(User.class, id));
-            session.getTransaction().commit();
+            try {
+                session.beginTransaction();
+                session.remove(session.get(User.class, id));
+                session.getTransaction().commit();
+            } catch (Exception e) {
+                if (session.getTransaction() != null) {
+                    session.getTransaction().rollback();
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
     @Override
     public List<User> getAllUsers() {
-        List<User> users;
-
+        List<User> users = List.of();
         try (Session session = HibernateUtil.getSession()) {
-            session.beginTransaction();
-            users = session.createQuery("from User").list();
-            session.getTransaction().commit();
+            try {
+                session.beginTransaction();
+                users = session.createQuery("from User").list();
+                session.getTransaction().commit();
+            } catch (Exception e) {
+                if (session.getTransaction() != null) {
+                    session.getTransaction().rollback();
+                    e.printStackTrace();
+                }
+            }
         }
         return users;
     }
