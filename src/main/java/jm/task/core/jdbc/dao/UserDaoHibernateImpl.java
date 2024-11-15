@@ -43,18 +43,16 @@ public class UserDaoHibernateImpl implements UserDao {
     }
 
     private static void executeQueryViaHibernate(String sql) {
-        //Я не очень понял, зачем отлавливать тут исключение и делать rollback,
-        // ведь транзакция не должна состояться в случае исключения? Погуглил, поспрашивал chatGPT.
-        // Предлагают оформить так: (по тестам работает)
         try (Session session = HibernateUtil.getSession()) {
             session.beginTransaction();
             try {
                 session.createSQLQuery(sql).executeUpdate();
                 session.getTransaction().commit();
             } catch (Exception e) {
-                if (session.getTransaction() != null) {
+                try {
                     session.getTransaction().rollback();
-                    e.printStackTrace();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
                 }
             }
 
@@ -70,9 +68,10 @@ public class UserDaoHibernateImpl implements UserDao {
                 session.save(new User(name, lastName, age));
                 session.getTransaction().commit();
             } catch (Exception e) {
-                if (session.getTransaction() != null) {
+                try {
                     session.getTransaction().rollback();
-                    e.printStackTrace();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
                 }
             }
         }
@@ -86,9 +85,10 @@ public class UserDaoHibernateImpl implements UserDao {
                 session.remove(session.get(User.class, id));
                 session.getTransaction().commit();
             } catch (Exception e) {
-                if (session.getTransaction() != null) {
+                try {
                     session.getTransaction().rollback();
-                    e.printStackTrace();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
                 }
             }
         }
@@ -103,14 +103,17 @@ public class UserDaoHibernateImpl implements UserDao {
                 users = session.createQuery("from User").list();
                 session.getTransaction().commit();
             } catch (Exception e) {
-                if (session.getTransaction() != null) {
+                try {
                     session.getTransaction().rollback();
-                    e.printStackTrace();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
                 }
             }
         }
         return users;
     }
 
-
 }
+
+
+
